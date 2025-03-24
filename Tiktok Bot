@@ -2,7 +2,13 @@ import openai
 from moviepy.editor import *
 from gtts import gTTS
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 import time
+import os
+import requests
+from bs4 import BeautifulSoup
+from google.cloud import vision
 
 # 1️⃣ Generar Guion con GPT-4
 def generar_guion(tema):
@@ -30,15 +36,139 @@ def crear_video(audio_file, imagenes, output="video_final.mp4"):
 
 # 4️⃣ Automatizar Subida con Selenium
 def subir_a_tiktok(usuario, contraseña, video_path):
-    driver = webdriver.Chrome()
-    driver.get("https://www.tiktok.com/upload")
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")  # Para ejecución en segundo plano
+    driver = webdriver.Chrome(options=options)
+    driver.get("https://www.tiktok.com/login")
     time.sleep(5)
-    # Aquí se agregaría el login y el proceso de subida
-    driver.quit()
+    
+    try:
+        # Inicio de sesión
+        username_input = driver.find_element(By.NAME, "username")
+        password_input = driver.find_element(By.NAME, "password")
+        login_button = driver.find_element(By.XPATH, "//button[contains(text(),'Log in')]")
+        
+        username_input.send_keys(usuario)
+        password_input.send_keys(contraseña)
+        login_button.click()
+        
+        time.sleep(10)  # Esperamos a que inicie sesión
+        
+        driver.get("https://www.tiktok.com/upload")
+        time.sleep(5)
+        
+        # Subir video
+        upload_input = driver.find_element(By.XPATH, "//input[@type='file']")
+        upload_input.send_keys(os.path.abspath(video_path))
+        
+        time.sleep(10)  # Esperamos a que se cargue
+        
+        # Agregar descripción
+        description_box = driver.find_element(By.XPATH, "//textarea")
+        description_box.send_keys("¡Mira este video increíble! #viral #trending")
+        
+        time.sleep(3)
+        
+        # Publicar
+        publish_button = driver.find_element(By.XPATH, "//button[contains(text(),'Post')]")
+        publish_button.click()
+        
+        time.sleep(10)  # Esperamos la subida
+    except Exception as e:
+        print(f"Error en la subida: {e}")
+    finally:
+        driver.quit()
+    print("Video subido con éxito")
 
+# 5️⃣ Recopilar Videos Populares (Scraping de TikTok)
+def obtener_videos_populares():
+    url = "https://www.tiktok.com/trending"
+    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Extraer los enlaces de los videos más virales
+    videos = []
+    for video in soup.find_all('a', class_='video-card'):
+        video_url = video['href']
+        videos.append(f"https://www.tiktok.com{video_url}")
+    
+    return videos
+
+# 6️⃣ Analizar Emociones de un Video usando Google Cloud Vision
+def analizar_imagen(imagen_path):
+    client = vision.ImageAnnotatorClient()
+    with open(imagen_path, 'rb') as image_file:
+        content = image_file.read()
+    
+    image = vision.Image(content=content)
+    response = client.label_detection(image=image)
+
+    # Extraemos etiquetas e interpretamos las emociones
+    etiquetas = [label.description for label in response.label_annotations]
+    return etiquetas
+
+# 7️⃣ Cortar Video en Segmentos
+def cortar_video(video_path, start_time, end_time, output_path):
+    video = VideoFileClip(video_path)
+    video_cortado = video.subclip(start_time, end_time)
+    video_cortado.write_videofile(output_path, codec="libx264")
+
+# para momentos mas especificos
+def cortar_video_en_momentos_virales(video_path, audio_path, umbral_audio=0.1):
+    # Detectamos picos de audio
+    picos_audio = detectar_picos_audio(audio_path, umbral_audio)
+    
+    # Detectamos cambios visuales
+    picos_visuales = detectar_cambio_visual(video_path)
+    
+    # Unir los picos de audio y visual, considerando solo los que se superponen
+    picos_combinados = list(set(picos_audio) & set(picos_visuales))
+    
+    # Cortamos los segmentos en esos momentos
+    clips = []
+    for pico in picos_combinados:
+        start_time = pico - 2  # Cortamos 2 segundos antes
+        end_time = pico + 2  # Cortamos 2 segundos después
+        clip_path = f"segmento_{int(pico)}.mp4"
+        cortar_video(video_path, start_time, end_time, clip_path)
+        clips.append(clip_path)
+    
+    # Crear el video final con los segmentos
+    crear_video_automatico(clips)
+
+# Ejecutar la función
+cortar_video_en_momentos_virales("video.mp4", "audio.mp3")
+
+# 8️⃣ Crear Video Automático con los Fragmentos Virales
+def crear_video_automatico(segmentos, output="video_final.mp4"):
+    clips = [VideoFileClip(segmento) for segmento in segmentos]
+    final_video = concatenate_videoclips(clips)
+    final_video.write_videofile(output, codec="libx264")
+    
 # Ejemplo de Uso
 tema = "Tendencias tecnológicas en 2025"
 guion = generar_guion(tema)
 generar_audio(guion)
 imagenes = ["imagen1.jpg", "imagen2.jpg"]
 crear_video("audio.mp3", imagenes)
+
+# Obtener los videos populares
+videos_populares = obtener_videos_populares()
+print(f"Videos populares: {videos_populares}")
+
+# Aquí podemos analizar los videos populares y extraer las partes virales
+# Por ejemplo, analizamos una imagen de un video para obtener emociones
+etiquetas_video = analizar_imagen("video_frame.jpg")
+print(etiquetas_video)
+
+# Cortamos el video en segmentos (esto es solo un ejemplo)
+cortar_video("video.mp4", 10, 20, "video_cortado.mp4")
+
+# Crear un nuevo video con los fragmentos virales
+segmentos = ["segmento1.mp4", "segmento2.mp4"]
+crear_video_automatico(segmentos)
+
+# Subir el video automáticamente (asegúrate de tener las credenciales correctas)
+subir_a_tiktok("tu_usuario", "tu_contraseña", "video_final.mp4")
+
