@@ -1,0 +1,44 @@
+import openai
+from moviepy.editor import *
+from gtts import gTTS
+from selenium import webdriver
+import time
+
+# 1️⃣ Generar Guion con GPT-4
+def generar_guion(tema):
+    prompt = f"Genera un guion para un video de TikTok viral sobre {tema}. Incluye una intro llamativa y un CTA al final."
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return response["choices"][0]["message"]["content"]
+
+# 2️⃣ Convertir el Guion en Audio
+def generar_audio(texto, nombre_archivo="audio.mp3"):
+    tts = gTTS(texto, lang="es")
+    tts.save(nombre_archivo)
+    print(f"Audio guardado como {nombre_archivo}")
+
+# 3️⃣ Crear Video con MoviePy
+def crear_video(audio_file, imagenes, output="video_final.mp4"):
+    clips = [ImageClip(img, duration=5) for img in imagenes]
+    video = concatenate_videoclips(clips, method="compose")
+    audio = AudioFileClip(audio_file)
+    video = video.set_audio(audio)
+    video.write_videofile(output, fps=24)
+    print("¡Video generado con éxito!")
+
+# 4️⃣ Automatizar Subida con Selenium
+def subir_a_tiktok(usuario, contraseña, video_path):
+    driver = webdriver.Chrome()
+    driver.get("https://www.tiktok.com/upload")
+    time.sleep(5)
+    # Aquí se agregaría el login y el proceso de subida
+    driver.quit()
+
+# Ejemplo de Uso
+tema = "Tendencias tecnológicas en 2025"
+guion = generar_guion(tema)
+generar_audio(guion)
+imagenes = ["imagen1.jpg", "imagen2.jpg"]
+crear_video("audio.mp3", imagenes)
