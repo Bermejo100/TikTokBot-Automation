@@ -1,0 +1,8 @@
+moviepy
+google-generativeai
+instagrapi
+playwright
+google-api-python-client
+google-auth-oauthlib
+schedule
+python-dotenv
