@@ -82,6 +82,6 @@ def mostrar_noticias(noticias: list):
         print()
 
 # Prueba
-if __name__ == "__main__":
-    noticias = obtener_todas_noticias()
-    mostrar_noticias(noticias)
+#if __name__ == "__main__":
+#    noticias = obtener_todas_noticias()
+#    mostrar_noticias(noticias)

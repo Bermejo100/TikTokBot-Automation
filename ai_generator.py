@@ -99,6 +99,6 @@ def confirmar_y_generar(noticias: list) -> dict:
 
 
 # Prueba del modulo solo
-if __name__ == "__main__":
-    resultado = generar_metadata("Noche Eterna", "Extended Mix", "techno")
-    print(resultado)
+#if __name__ == "__main__":
+#    resultado = generar_metadata("Noche Eterna", "Extended Mix", "techno")
+#    print(resultado)
