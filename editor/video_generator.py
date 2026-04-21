@@ -18,7 +18,7 @@
 # editor/video_generator.py
 import os
 import subprocess
-from moviepy.editor import (VideoFileClip, ImageClip, CompositeVideoClip, 
+from moviepy import (VideoFileClip, ImageClip, CompositeVideoClip, 
                              AudioFileClip, TextClip, concatenate_videoclips)
 from PIL import Image
 import yt_dlp
