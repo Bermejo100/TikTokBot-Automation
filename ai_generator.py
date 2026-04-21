@@ -64,6 +64,20 @@ Responde SOLO con JSON válido así:
     texto_limpio = re.sub(r"```json|```", "", texto).strip()
     return json.loads(texto_limpio)
 
+def extraer_artista_de_titulo(titulo: str) -> str:
+    """Extrae el nombre del artista del título de la noticia"""
+    artistas = [
+        "Celine Dion", "Bad Bunny", "Taylor Swift", "Kanye West",
+        "BTS", "Karol G", "J Balvin", "Peso Pluma", "SZA",
+        "Post Malone", "Chappell Roan", "Kesha", "FKA Twigs",
+        "Camilo", "Interpol", "Lana Del Rey", "Kacey Musgraves"
+    ]
+    for artista in artistas:
+        if artista.lower() in titulo.lower():
+            return artista
+    palabras = titulo.split()
+    return " ".join(palabras[:2])
+
 def confirmar_y_generar(noticias: list) -> dict:
     
     # IA sugiere
