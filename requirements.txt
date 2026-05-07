@@ -6,3 +6,7 @@ google-api-python-client
 google-auth-oauthlib
 schedule
 python-dotenv
+openai
+ffmpeg
+yt-dlp
+groq

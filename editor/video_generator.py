@@ -18,39 +18,139 @@
 # editor/video_generator.py
 import os
 import subprocess
-from moviepy import (VideoFileClip, ImageClip, CompositeVideoClip, 
-                             AudioFileClip, TextClip, concatenate_videoclips)
+from moviepy         import (VideoFileClip, ImageClip, CompositeVideoClip, 
+                             AudioFileClip, TextClip, concatenate_videoclips,ColorClip)
 from PIL import Image
 import yt_dlp
 
-def buscar_video_youtube(query: str, duracion_max: int = 60) -> str:
-    """Busca y descarga el video más relevante de YouTube"""
+
+def buscar_video(query: str) -> str:
+    """Busca video en múltiples plataformas con respaldo"""
+    output_path = "assets/video_descargado.mp4"
+
+    # Cookies de sesión para TikTok e Instagram
+    # (se generan automáticamente si estás logueado en el navegador)
+    ydl_opts_base = {
+        "format": "best[ext=mp4][height<=720]/best[ext=mp4]/best",
+        "outtmpl": output_path,
+        "noplaylist": True,
+        "quiet": True,
+        "no_warnings": True,
+        "socket_timeout": 15,
+    }
+
+    ydl_opts_con_cookies = {
+        **ydl_opts_base,
+        "cookiesfrombrowser": ("chromium",),  # Coge cookies del Chromium instalado
+    }
+
+    # Queries de más a menos específico
+    queries_youtube = [
+        f"ytsearch1:{query}",
+        f"ytsearch1:{query} official",
+        f"ytsearch1:{query} shorts",
+        f"ytsearch1:{query} 2025",
+        f"ytsearch1:{query} 2026",
+        f"ytsearch1:{query.split()[0]} news 2026",
+        f"ytsearch1:{query.split()[0]} music video",
+    ]
+
+    queries_tiktok = [
+        f"https://www.tiktok.com/search?q={query.replace(' ', '%20')}",
+        f"https://www.tiktok.com/search?q={query.split()[0].replace(' ', '%20')}",
+    ]
+
+    queries_instagram = [
+        f"https://www.instagram.com/explore/tags/{query.split()[0].replace(' ', '').lower()}/",
+    ]
+
+    # 1 — Intentar YouTube sin cookies (más fiable)
+    print("🔍 Buscando en YouTube...")
+    for intento in queries_youtube:
+        resultado = _intentar_descarga(intento, output_path, ydl_opts_base)
+        if resultado:
+            return resultado
+
+    # 2 — Intentar YouTube Shorts específicamente
+    print("🔍 Buscando en YouTube Shorts...")
+    shorts_queries = [
+        f"ytsearch1:{query} #shorts",
+        f"ytsearch1:{query.split()[0]} shorts viral",
+    ]
+    for intento in shorts_queries:
+        resultado = _intentar_descarga(intento, output_path, ydl_opts_base)
+        if resultado:
+            return resultado
+
+    # 3 — Intentar TikTok con cookies
+    print("🔍 Buscando en TikTok...")
+    for intento in queries_tiktok:
+        resultado = _intentar_descarga(intento, output_path, ydl_opts_con_cookies)
+        if resultado:
+            return resultado
+
+    # 4 — Intentar Instagram con cookies
+    print("🔍 Buscando en Instagram...")
+    for intento in queries_instagram:
+        resultado = _intentar_descarga(intento, output_path, ydl_opts_con_cookies)
+        if resultado:
+            return resultado
+
+    print("❌ No se encontró video en ninguna fuente")
+    return None
+
+
+def _intentar_descarga(url: str, output_path: str, ydl_opts: dict) -> str:
+    """Intenta descargar un video y devuelve la ruta si tiene éxito"""
     try:
-        output_path = "assets/video_descargado.mp4"
-        
-        ydl_opts = {
-            "format": "best[ext=mp4][height<=720]",
-            "outtmpl": output_path,
-            "noplaylist": True,
-            "quiet": True,
-            "no_warnings": True,
-            "match_filter": yt_dlp.utils.match_filter_func(
-                f"duration < {duracion_max}"
-            ),
-        }
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            print(f"🔍 Buscando video: {query}")
-            ydl.download([f"ytsearch1:{query}"])
-
         if os.path.exists(output_path):
-            print(f"✅ Video descargado")
+            os.remove(output_path)
+
+        print(f"   → {url[:70]}...")
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+
+        if os.path.exists(output_path) and os.path.getsize(output_path) > 10000:
+            print(f"   ✅ Encontrado!")
             return output_path
-        return None
 
     except Exception as e:
-        print(f"⚠️ Error descargando video: {e}")
-        return None
+        error = str(e)[:80]
+        if "login" in error.lower() or "sign in" in error.lower():
+            print(f"   ⚠️ Requiere login")
+        else:
+            print(f"   ⚠️ {error}")
+    return None
+
+#pruba 1 con youtube si fuera correcto
+#def buscar_video_youtube(query: str, duracion_max: int = 60) -> str:
+#    """Busca y descarga el video más relevante de YouTube"""
+#    try:
+#        output_path = "assets/video_descargado.mp4"
+#        
+#        ydl_opts = {
+#            "format": "best[ext=mp4][height<=720]",
+#            "outtmpl": output_path,
+#            "noplaylist": True,
+#            "quiet": True,
+#            "no_warnings": True,
+#            "match_filter": yt_dlp.utils.match_filter_func(
+#                f"duration < {duracion_max}"
+#            ),
+#        }
+#
+#        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+#            print(f"🔍 Buscando video: {query}")
+#            ydl.download([f"ytsearch1:{query}"])
+#
+#        if os.path.exists(output_path):
+#            print(f"✅ Video descargado")
+#            return output_path
+#        return None
+#
+#    except Exception as e:
+#        print(f"⚠️ Error descargando video: {e}")
+#        return None
 
 
 def recortar_video(ruta_video: str, duracion: int = 28) -> str:
@@ -114,7 +214,6 @@ def adaptar_formato(ruta_video: str, formato: str = "vertical") -> str:
         video_redim = video.resize((ancho_final, alto_final))
 
         # Fondo negro del tamaño objetivo
-        from moviepy.editor import ColorClip
         fondo = ColorClip(
             size=(nuevo_ancho, nuevo_alto), 
             color=[0, 0, 0],
@@ -177,16 +276,18 @@ def añadir_logo(ruta_video: str, ruta_logo: str, output_path: str) -> str:
         return ruta_video
 
 
-def generar_video_completo(titulo_noticia: str, artista: str) -> dict:
-    """
-    Función principal — genera todos los videos necesarios
-    Devuelve rutas de los videos para cada plataforma
-    """
-    print(f"\n🎬 Generando videos para: {titulo_noticia}")
+def generar_video_completo(titulo_noticia: str, artista: str, query_video: str) -> dict:
+    """Función principal — genera todos los videos necesarios"""
+    print(f"\n🎬 Generando videos para: {artista}")
     
+    # Usar query de IA si lo tenemos, si no generar uno básico
+    if not query_video:
+        palabras = titulo_noticia.split()[:4]
+        query_video = f"{artista} {' '.join(palabras)}"
+
     # 1 — Buscar y descargar video
     query = f"{artista} {titulo_noticia[:50]}"
-    video_descargado = buscar_video_youtube(query)
+    video_descargado = buscar_video(query_video)   #buscar_video_youtube fase 1
     
     if not video_descargado:
         print("❌ No se encontró video")
@@ -230,12 +331,12 @@ def generar_video_completo(titulo_noticia: str, artista: str) -> dict:
 
 
 # Prueba
-if __name__ == "__main__":
-    videos = generar_video_completo(
-        "Celine Dion Comeback Concerts Paris",
-        "Celine Dion"
-    )
-    if videos:
-        print(f"\n✅ Videos generados:")
-        for plataforma, ruta in videos.items():
-            print(f"   {plataforma}: {ruta}")
+#if __name__ == "__main__":
+#    videos = generar_video_completo(
+#        "Celine Dion Comeback Concerts Paris",
+#        "Celine Dion"
+#    )
+#    if videos:
+#        print(f"\n✅ Videos generados:")
+#        for plataforma, ruta in videos.items():
+#            print(f"   {plataforma}: {ruta}")
