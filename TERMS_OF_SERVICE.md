@@ -1,6 +1,6 @@
-# Terms of Service for [Pon aquí el Nombre de tu Bot, ej: MusicNewsBot]
+# Terms of Service for TiktokBot-Automation
 
-**Effective Date:** [Pon la fecha de hoy, ej: May 20, 2024]
+**Effective Date:** May 14, 2026]
 
 By using the 
 TikTokBot-Automation (the "Application"), you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the Application.
