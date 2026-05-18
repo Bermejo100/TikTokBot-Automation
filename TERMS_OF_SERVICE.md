@@ -1,9 +1,9 @@
-# Terms of Service for TiktokBot-Automation
+# Terms of Service for CoverPage-Automation
 
 **Effective Date:** May 14, 2026]
 
 By using the 
-TikTokBot-Automation (the "Application"), you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the Application.
+CoverPage-Automation (the "Application"), you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the Application.
 
 ## 1. Description of Service
 
@@ -38,4 +38,4 @@ These Terms of Service shall be governed by the laws of Spain, without regard to
 ## 8. Contact Us
 
 If you have any questions about these Terms, please contact us at:
-*   github.com/Bermejo100/TikTokBot-Automation/issues
+*   github.com/Bermejo100/CoverPage-Automation/issues
