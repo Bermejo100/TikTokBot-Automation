@@ -1,4 +1,4 @@
-# Privacy Policy for Tiktok Automation
+# Privacy Policy for CoverPage-Automation
 
 **Effective Date:** May 14, 2026
 
@@ -40,4 +40,4 @@ We may update this Privacy Policy from time to time. Any changes will be reflect
 ## 6. Contact Us
 
 If you have any questions about this Privacy Policy, please contact us at:
-*   github.com/Bermejo100/TikTok-Automation/issues
+*   github.com/Bermejo100/CoverPage-Automation/issues
