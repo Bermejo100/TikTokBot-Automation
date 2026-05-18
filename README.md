@@ -1,2 +1,2 @@
-# TikTokBot-Automation
+# CoverPage-Automation
 Intento bot automatico
